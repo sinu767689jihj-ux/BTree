@@ -1,0 +1,162 @@
+#include<stdio.h>
+#include<stdlib.h>
+#define MAX 4
+#define MIN 2
+typedef struct Btreenode
+{
+    int val[MAX+1],count;
+    struct Btreenode*link[MAX+1];
+}Btreenode;
+Btreenode*root=NULL;
+Btreenode*createnode(int val,Btreenode*child)
+{
+    Btreenode*newNode=(Btreenode*)malloc(sizeof(Btreenode));
+    newNode->val[1]=val;
+    newNode->count=1;
+    newNode->link[0]=NULL;
+    newNode->link[1]=child;
+    return newNode;
+}
+void addvalue(int val,int pos,Btreenode*node,Btreenode*child)
+{
+    int j=node->count;
+    while(j>pos)
+    {
+        node->val[j+1]=node->val[j];
+        node->link[j+1]=node->link[j];
+        j--;
+    }
+    node->val[j+1]=val;
+    node->link[j+1]=child;
+    node->count++;
+}
+void splitNode(int val,int*pval,int pos,Btreenode*node,Btreenode*child,Btreenode**newNode)
+{
+    int j,median;
+    if(pos>MIN)
+    median=MIN+1;
+    else
+    median=MIN;
+    *newNode=(Btreenode*)malloc(sizeof(Btreenode));
+    j=median+1;
+    while(j<=MAX)
+    {
+        (*newNode)->val[j-median]=node->val[j];
+        (*newNode)->link[j-median]=node->link[j];
+        j++;
+    }
+    (*newNode)->count=MAX-median;
+    node->count=median;
+    if(pos<=MIN)
+    addvalue(val,pos,node,child);
+    else
+    addvalue(val,pos-median,*newNode,child);
+    *pval=node->val[node->count];
+    (*newNode)->link[0]=node->link[node->count];
+    node->count--;
+}
+int setvalue(int val,int*pval,Btreenode*node,Btreenode**child)
+{
+    int pos;
+    if(node==NULL)
+    {
+        *pval=val;
+        *child=NULL;
+        return 1;
+    }
+    if(val<node->val[1])
+    pos=0;
+    else{
+        for(pos=node->count;(val<node->val[pos]&&pos>1);pos--);
+        if(val==node->val[pos])
+        {
+            if(node==root)
+            printf("Duplicate value is not allowed:");
+            return 0;
+        }
+    }
+    if(setvalue(val,pval,node->link[pos],child)){
+    if(node->count<MAX){
+    addvalue(*pval,pos,node,*child);
+    return 0;
+    }
+    else{
+        splitNode(*pval,pval,pos,node,*child,child);
+        return 1;
+    }
+}
+return 0;
+}
+void insert(int val)
+{
+    int i,flag;
+    Btreenode*child;
+    flag=setvalue(val,&i,root,&child);
+    if(flag)
+    root=createnode(i,child);
+}
+void traverse(Btreenode*myNode)
+{
+    int i;
+    if(myNode!=NULL){
+    for(i=0;i<myNode->count;i++)
+    {
+        traverse(myNode->link[i]);
+        printf("%d ",myNode->val[i+1]);
+    }
+    traverse(myNode->link[i]);
+}
+}
+void searchvalue(int val,Btreenode*myNode)
+{
+    int pos;
+    if(!myNode)
+    {
+        printf("value:%d not Found",val);
+        return;
+    }
+    for(pos=1;(pos<=myNode->count&&val>myNode->val[pos]);pos++);
+    if(pos<=myNode->count&&val==myNode->val[pos])
+    printf("%d",val);
+    else
+    searchvalue(val,myNode->link[pos]);
+}
+int main()
+{
+    int num,i,choice,searchkey,delkey;
+    int arr[100];
+    for(i=0;i<100;i++)
+    {
+        arr[i]=rand()%500;
+        insert(arr[i]);
+    }
+    printf("\tB-Tree in the order 5:\t\n");
+    do{
+        printf("\n1.insert\n2.Search\n3.Traverse\n4.Exiting...\n");
+        printf("Enter your choice:");
+        scanf("%d",&choice);
+        switch(choice)
+        {
+            case 1:
+            printf("Enter the number:");
+            scanf("%d",&num);
+            insert(num);
+            break;
+            case 2:
+            printf("Enter the searchkey:");
+            scanf("%d",&searchkey);
+            searchvalue(searchkey,root);
+            break;
+            case 3:
+            printf("\nTraversal each element:\n");
+            traverse(root);
+            break;
+            case 4:
+            printf("Exiting...\n");
+            break;
+            default:
+            printf("Invalid choice:");
+        }
+    }while(choice!=4);
+    return 0;
+}
